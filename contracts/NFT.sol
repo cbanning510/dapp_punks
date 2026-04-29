@@ -12,6 +12,7 @@ contract NFT is ERC721Enumerable, Ownable {
     uint256 public cost;
     uint256 public maxSupply;
     uint256 public allowMintingOn;
+    uint256 public maxMintingAmount;
 
     event Mint(uint256 amount, address minter);
     event Withdraw(uint256 amount, address owner);
@@ -21,6 +22,7 @@ contract NFT is ERC721Enumerable, Ownable {
         string memory _symbol,
         uint256 _cost,
         uint256 _maxSupply,
+        uint256 _maxMintingAmount,
         uint256 _allowMintingOn,
         string memory _baseURI
     ) ERC721(_name, _symbol) {
@@ -28,6 +30,7 @@ contract NFT is ERC721Enumerable, Ownable {
         maxSupply = _maxSupply;
         allowMintingOn = _allowMintingOn;
         baseURI = _baseURI;
+        maxMintingAmount = _maxMintingAmount;
     }
 
     function mint(uint256 _mintAmount) public payable {
@@ -35,6 +38,8 @@ contract NFT is ERC721Enumerable, Ownable {
         require(block.timestamp >= allowMintingOn);
         // Must mint at least 1 token
         require(_mintAmount > 0);
+        // Must mint less than maxMintingAmount
+        require(_mintAmount <= maxMintingAmount, "exceeds max allowed mints");
         // Require enough payment
         require(msg.value >= cost * _mintAmount);
 
@@ -44,7 +49,7 @@ contract NFT is ERC721Enumerable, Ownable {
         require(supply + _mintAmount <= maxSupply);
 
         // Create tokens
-        for(uint256 i = 1; i <= _mintAmount; i++) {
+        for (uint256 i = 1; i <= _mintAmount; i++) {
             _safeMint(msg.sender, supply + i);
         }
 
@@ -54,21 +59,23 @@ contract NFT is ERC721Enumerable, Ownable {
 
     // Return metadata IPFS url
     // EG: 'ipfs://QmQ2jnDYecFhrf3asEWjyjZRX1pZSsNWG3qHzmNDvXa9qg/1.json'
-    function tokenURI(uint256 _tokenId)
-        public
-        view
-        virtual
-        override
-        returns(string memory)
-    {
-        require(_exists(_tokenId), 'token does not exist');
-        return(string(abi.encodePacked(baseURI, _tokenId.toString(), baseExtension)));
+    function tokenURI(
+        uint256 _tokenId
+    ) public view virtual override returns (string memory) {
+        require(_exists(_tokenId), "token does not exist");
+        return (
+            string(
+                abi.encodePacked(baseURI, _tokenId.toString(), baseExtension)
+            )
+        );
     }
 
-    function walletOfOwner(address _owner) public view returns(uint256[] memory) {
+    function walletOfOwner(
+        address _owner
+    ) public view returns (uint256[] memory) {
         uint256 ownerTokenCount = balanceOf(_owner);
         uint256[] memory tokenIds = new uint256[](ownerTokenCount);
-        for(uint256 i; i < ownerTokenCount; i++) {
+        for (uint256 i; i < ownerTokenCount; i++) {
             tokenIds[i] = tokenOfOwnerByIndex(_owner, i);
         }
         return tokenIds;
@@ -88,5 +95,4 @@ contract NFT is ERC721Enumerable, Ownable {
     function setCost(uint256 _newCost) public onlyOwner {
         cost = _newCost;
     }
-
 }
