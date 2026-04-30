@@ -31,6 +31,7 @@ function App() {
   const [cost, setCost] = useState(0);
   const [balance, setBalance] = useState(0);
   const [owner, setOwner] = useState(null);
+  const [wallet, setWallet] = useState([]);
 
   const [isLoading, setIsLoading] = useState(true);
 
@@ -57,9 +58,18 @@ function App() {
     const owner = await nft.owner();
     setOwner(owner);
 
+    const wallet = await nft.walletOfOwner(account);
+    setWallet(wallet);
+
     console.log("owner:", owner);
+    console.log("wallet is ", wallet);
     console.log("account:", account);
     console.log("match:", account.toLowerCase() === owner.toLowerCase());
+    console.log("balance is ", balance.toString());
+    console.log(
+      "wallet[wallet.length - 1]",
+      wallet[wallet.length - 1].toString(),
+    );
 
     // Fetch Countdown
     const allowMintingOn = await nft.allowMintingOn();
@@ -98,10 +108,12 @@ function App() {
         <>
           <Row>
             <Col>
-              {balance > 0 ? (
+              {wallet.length > 0 ? (
                 <div className='text-center'>
                   <img
-                    src={`https://gateway.pinata.cloud/ipfs/QmQPEMsfd1tJnqYPbnTQCjoa8vczfsV1FmqZWgRdNQ7z3g/${balance.toString()}.png`}
+                    src={`https://gateway.pinata.cloud/ipfs/QmQPEMsfd1tJnqYPbnTQCjoa8vczfsV1FmqZWgRdNQ7z3g/${wallet[
+                      wallet.length - 1
+                    ].toString()}.png`}
                     alt='Open Punk'
                     width='400px'
                     height='400px'
@@ -133,6 +145,19 @@ function App() {
                 cost={cost}
                 setIsLoading={setIsLoading}
               />
+            </Col>
+          </Row>
+          <Row>
+            <Col>
+              {wallet.map((tokenId, index) => (
+                <img
+                  key={tokenId.toString()}
+                  src={`https://gateway.pinata.cloud/ipfs/QmQPEMsfd1tJnqYPbnTQCjoa8vczfsV1FmqZWgRdNQ7z3g/${tokenId.toString()}.png`}
+                  alt={`Punk #${tokenId.toString()}`}
+                  width='150px'
+                  height='150px'
+                />
+              ))}
             </Col>
           </Row>
         </>
